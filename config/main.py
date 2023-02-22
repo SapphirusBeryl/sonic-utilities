@@ -4083,6 +4083,35 @@ def shutdown(ctx, interface_name):
             config_db.mod_entry("VLAN_SUB_INTERFACE", sp_name, {"admin_status": "down"})
 
 #
+# 'description' subcommand
+#
+
+@interface.command()
+@click.pass_context
+@click.argument('interface_name', metavar='<interface_name>', required=True)
+@click.argument('interface_desc', metavar='<interface_desc>', required=True)
+@click.option('-v', '--verbose', is_flag=True, help="Enable verbose output")
+def description(ctx, interface_name, interface_desc, verbose):
+    """Set interface description"""
+    config_db = ctx.obj['config_db']
+    if clicommon.get_interface_naming_mode() == "alias":
+        interface_name = interface_alias_to_name(interface_name)
+        if interface_name is None:
+            ctx.fail("'interface_name' is None!")
+
+    if interface_name_is_valid(config_db, interface_name) is False:
+        ctx.fail("Interface name is invalid. Please enter a valid interface name!!")
+
+    if ctx.obj['namespace'] is DEFAULT_NAMESPACE:
+        command = "portconfig -p {} -d '{}'".format(interface_name, interface_desc)
+    else:
+        command = "portconfig -p {} -d '{}' -n {}".format(interface_name, interface_desc, ctx.obj['namespace'])
+
+    if verbose:
+        command += " -vv"
+    clicommon.run_command(command, display_cmd=verbose)
+
+#
 # 'speed' subcommand
 #
 

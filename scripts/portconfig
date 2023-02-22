@@ -21,6 +21,7 @@ optional arguments:
   -S     --adv-speeds          port advertised speeds
   -t     --interface-type      port interface type
   -T     --adv-interface-types port advertised interface types
+  -d     --description         port description
   -lt    --link-training       port link training mode
   -P     --tx-power            400G ZR modulet target Tx output power (dBm)
   -F     --laser-freq          400G ZR module 75GHz grid frequency (GHz)
@@ -46,6 +47,7 @@ from utilities_common.general import load_db_config
 
 # APPL_DB constants
 PORT_TABLE_NAME = "PORT"
+PORT_DESC_FIELD_NAME = "description"
 PORT_SPEED_CONFIG_FIELD_NAME = "speed"
 PORT_FEC_CONFIG_FIELD_NAME = "fec"
 PORT_MTU_CONFIG_FIELD_NAME = "mtu"
@@ -190,6 +192,11 @@ class portconfig(object):
         print("Setting laser frequency to %s GHz on port %s" % (laser_freq, port))
         self.db.mod_entry(PORT_TABLE_NAME, port, {PORT_XCVR_LASER_FREQ_FIELD_NAME: laser_freq})
 
+    def set_description(self, port, desc):
+        if self.verbose:
+            print("Setting description %s on port %s" % (desc, port))
+        self.db.mod_entry(PORT_TABLE_NAME, port, {PORT_DESC_FIELD_NAME: desc})
+
     def set_adv_speeds(self, port, adv_speeds):
         if self.is_lag:
             raise Exception("Invalid port %s" % (port))
@@ -333,6 +340,7 @@ def main():
     parser.add_argument('-f', '--fec', type=str, help='port fec mode value (default is: none, rs, fc)', default=None)
     parser.add_argument('-m', '--mtu', type=int, help='port mtu value in bytes', default=None)
     parser.add_argument('-tp', '--tpid', type=str, help='port TPID value in hex (e.g. 0x8100)', default=None)
+    parser.add_argument('-d', '--description', type=str, help='port description', default=None)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
     parser.add_argument('-vv', '--verbose', action='store_true', help='Verbose output', default=False)
     parser.add_argument('-n', '--namespace', metavar='namespace details', type = str, required = False,
@@ -361,7 +369,7 @@ def main():
             port.list_params(args.port)
         elif args.speed or args.fec or args.mtu or args.link_training or args.autoneg or args.adv_speeds or \
             args.interface_type or args.adv_interface_types or args.tpid or \
-            args.tx_power or args.laser_freq:
+            args.tx_power or args.laser_freq or args.description:
             if args.speed:
                 port.set_speed(args.port, args.speed)
             if args.fec:
@@ -391,6 +399,8 @@ def main():
                     print("Error: Frequency must be > 0")
                     sys.exit(1)
                 port.set_laser_freq(args.port, args.laser_freq)
+            if args.description:
+                port.set_description(args.port, args.description)
         else:
             parser.print_help()
             sys.exit(1)
