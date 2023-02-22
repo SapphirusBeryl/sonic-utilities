@@ -21,6 +21,7 @@ optional arguments:
   -S     --adv-speeds          port advertised speeds
   -t     --interface-type      port interface type
   -T     --adv-interface-types port advertised interface types
+  -d     --description         port description
 """
 import os
 import sys
@@ -42,6 +43,7 @@ from utilities_common.general import load_db_config
 
 # APPL_DB constants
 PORT_TABLE_NAME = "PORT"
+PORT_DESC_FIELD_NAME = "description"
 PORT_SPEED_CONFIG_FIELD_NAME = "speed"
 PORT_FEC_CONFIG_FIELD_NAME = "fec"
 PORT_MTU_CONFIG_FIELD_NAME = "mtu"
@@ -135,6 +137,11 @@ class portconfig(object):
             print("Setting autoneg %s on port %s" % (mode, port))
         mode = 'on' if mode == 'enabled' else 'off'
         self.db.mod_entry(PORT_TABLE_NAME, port, {PORT_AUTONEG_CONFIG_FIELD_NAME: mode})
+
+    def set_description(self, port, desc):
+        if self.verbose:
+            print("Setting description %s on port %s" % (desc, port))
+        self.db.mod_entry(PORT_TABLE_NAME, port, {PORT_DESC_FIELD_NAME: desc})
 
     def set_adv_speeds(self, port, adv_speeds):
         if self.verbose:
@@ -244,6 +251,7 @@ def main():
     parser.add_argument('-f', '--fec', type=str, help='port fec mode value in (none, rs, fc)', default=None)
     parser.add_argument('-m', '--mtu', type=int, help='port mtu value in bytes', default=None)
     parser.add_argument('-tp', '--tpid', type=str, help='port TPID value in hex (e.g. 0x8100)', default=None)
+    parser.add_argument('-d', '--description', type=str, help='port description', default=None)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
     parser.add_argument('-vv', '--verbose', action='store_true', help='Verbose output', default=False)
     parser.add_argument('-n', '--namespace', metavar='namespace details', type = str, required = False,
@@ -264,7 +272,7 @@ def main():
         port = portconfig(args.verbose, args.port, args.namespace)
         if args.list:
             port.list_params(args.port)
-        elif args.speed or args.fec or args.mtu or args.autoneg or args.adv_speeds or args.interface_type or args.adv_interface_types or args.tpid:
+        elif args.speed or args.fec or args.mtu or args.autoneg or args.adv_speeds or args.interface_type or args.adv_interface_types or args.tpid or args.description:
             if args.speed:
                 port.set_speed(args.port, args.speed)
             if args.fec:
@@ -281,6 +289,8 @@ def main():
                 port.set_adv_interface_types(args.port, args.adv_interface_types)
             if args.tpid:
                 port.set_tpid(args.port, args.tpid)
+            if args.description:
+                port.set_description(args.port, args.description)
         else:
             parser.print_help()
             sys.exit(1)
