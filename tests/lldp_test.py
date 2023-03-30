@@ -23,41 +23,84 @@ expected_2MACs_Ethernet0_output = \
  '--------------------------------------------------\n'
  'Total entries displayed:  2')
 
-expected_lldpctl_xml_output = \
-['<?xml version="1.0" encoding="UTF-8"?>\n\
-        <lldp label="LLDP neighbors">\n\
-        <interface label="Interface" name="Ethernet0" via="LLDP" rid="2" age="7 days, 22:11:33">\n\
-            <chassis label="Chassis">\n\
-                <id label="ChassisID" type="mac">00:00:00:00:00:01</id>\n\
-                <name label="SysName">dummy</name>\n\
-                <descr label="SysDescr">NA</descr>\n\
-                <mgmt-ip label="MgmtIP">00:00:00:00:00:00</mgmt-ip>\n\
-                <capability label="Capability" type="Bridge" enabled="on"/>\n\
-                <capability label="Capability" type="Router" enabled="on"/>\n\
-                <capability label="Capability" type="Wlan" enabled="off"/>\n\
-                <capability label="Capability" type="Station" enabled="off"/>\n\
-            </chassis>\n\
-            <port label="Port">\n\
-                <id label="PortID" type="mac">00:00:00:00:00:01</id>\n\
-                <descr label="PortDescr">First MAC</descr>\n\
-                <ttl label="TTL">120</ttl>\n\
-            </port>\n\
-        </interface>\n\
-        <interface label="Interface" name="Ethernet0" via="LLDP" rid="4" age="7 days, 22:11:34">\n\
-            <chassis label="Chassis">\n\
-                <id label="ChassisID" type="mac">00:00:00:00:00:02</id>\n\
-                <name label="SysName">dummy</name>\n\
-                <descr label="SysDescr">NA</descr>\n\
-                <mgmt-ip label="MgmtIP">00:00:00:00:00:00</mgmt-ip>\n\
-                <capability label="Capability" type="Router" enabled="on"/>\n\
-            </chassis>\n\
-            <port label="Port">\n\
-            <id label="PortID" type="mac">00:00:00:00:00:02</id>\n\
-                <descr label="PortDescr">Second MAC</descr>\n\
-                <ttl label="TTL">120</ttl>\n\
-            </port>\n\
-        </interface>\n\
-        </lldp>\n']
+expected_lldpctl_xml_output = ['''
+{
+  "lldp": {
+    "interface": [
+      {
+        "Ethernet0": {
+          "via": "LLDP",
+          "rid": "2",
+          "age": "7 days, 22:11:33",
+          "chassis": {
+            "dummy": {
+              "id": {
+                "type": "mac",
+                "value": "00:00:00:00:00:01"
+              },
+              "descr": "NA",
+              "mgmt-ip": "192.0.2.1",
+              "capability": [
+                {
+                  "type": "Bridge",
+                  "enabled": true
+                },
+                {
+                  "type": "Router",
+                  "enabled": true
+                },
+                {
+                  "type": "Wlan",
+                  "enabled": false
+                },
+                {
+                  "type": "Station",
+                  "enabled": false
+                }
+              ]
+            }
+          },
+          "port": {
+            "id": {
+              "type": "mac",
+              "value": "00:00:00:00:00:01"
+            },
+            "descr": "First MAC",
+            "ttl": "120"
+          }
+        }
+      },
+      {
+        "Ethernet0": {
+          "via": "LLDP",
+          "rid": "4",
+          "age": "7 days, 22:11:34",
+          "chassis": {
+            "dummy": {
+              "id": {
+                "type": "mac",
+                "value": "00:00:00:00:00:02"
+              },
+              "descr": "NA",
+              "capability": {
+                "type": "Router",
+                "enabled": true
+              }
+            }
+          },
+          "port": {
+            "id": {
+              "type": "mac",
+              "value": "00:00:00:00:00:02"
+            },
+            "descr": "Second MAC",
+            "ttl": "120"
+          }
+        }
+      }
+    ]
+  }
+}''']
 
 class TestLldp(object):
     @classmethod
