@@ -23,7 +23,7 @@ import argparse
 import re
 import subprocess
 import sys
-from lxml import etree as ET
+import json
 
 from sonic_py_common import device_info
 from swsscommon.swsscommon import ConfigDBConnector
@@ -79,15 +79,10 @@ class Lldpshow(object):
         for lldp_instace_num in range(len(self.lldp_instance)):
             lldp_interface_list = lldp_port if lldp_port is not None else self.lldp_interface[lldp_instace_num]
             # In detail mode we will pass interface list (only front ports) and get O/P as plain text
-            # and in table format we will get xml output
-            if not lldp_detail_info:
-                lldp_args = ['-f', 'xml']
-            elif lldp_interface_list == '':
-                lldp_args = []
-            else:
-                lldp_args = [lldp_interface_list]
-            lldp_cmd = ['sudo', 'docker', 'exec', '-i', 'lldp{}'.format(self.lldp_instance[lldp_instace_num]), 'lldpctl'] + lldp_args
-            p = subprocess.Popen(lldp_cmd, stdout=subprocess.PIPE, text=True)
+            # and in table format we will get json output
+            lldp_cmd = 'sudo docker exec -i lldp{} lldpctl '.format(self.lldp_instance[lldp_instace_num]) + (
+                '-f json' if not lldp_detail_info else lldp_interface_list)
+            p = subprocess.Popen(lldp_cmd, stdout=subprocess.PIPE, shell=True, text=True)
             (output, err) = p.communicate()
             ## Wait for end of command. Get return returncode ##
             returncode = p.wait()
@@ -111,8 +106,8 @@ class Lldpshow(object):
         """
         capability = ""
         for cap in capabs:
-            if cap.attrib['enabled'] == 'on':
-                captype = cap.attrib['type']
+            if cap['enabled']:
+                captype = cap['type']
                 if captype in self.ctags.keys():
                     capability += self.ctags[captype]
                 else:
@@ -126,31 +121,33 @@ class Lldpshow(object):
         if lldp_detail_info:
             return
         for lldpraw in self.lldpraw:
-            neis = ET.fromstring(lldpraw.encode())
-            intfs = neis.findall('interface')
+            neis = json.loads(lldpraw)
+            intfs = neis['lldp']['interface']
             for intf in intfs:
-                l_intf = intf.attrib['name']
+                l_intf = next(iter(intf.keys()))
                 if l_intf.startswith(BACKEND_ASIC_INTERFACE_NAME_PREFIX):
                     continue
-                remote_port = intf.find('port')
-                r_portid = remote_port.find('id').text
+                intf = intf[l_intf]
+
+                remote_port = intf['port']
+                r_portid = remote_port['id']['value']
                 key = l_intf + "#" + r_portid
                 self.lldpsum[key] = {}
                 self.lldpsum[key]['l_intf'] = l_intf
                 self.lldpsum[key]['r_portid'] = r_portid
-                chassis = intf.find('chassis')
-                capabs = chassis.findall('capability')
+
+                chassis = intf['chassis']
+                if len(chassis) == 1:
+                    rmt_name = next(iter(chassis.keys()))
+                    chassis = chassis[rmt_name]
+                else:
+                    rmt_name = ''
+                capabs = chassis['capability']
+                if isinstance(capabs, dict):
+                    capabs = [capabs]
                 capab = self.parse_cap(capabs)
-                rmt_name = chassis.find('name')
-                if rmt_name is not None:
-                    self.lldpsum[key]['r_name'] = rmt_name.text
-                else:
-                    self.lldpsum[key]['r_name'] = ''
-                rmt_desc = remote_port.find('descr')
-                if rmt_desc is not None:
-                    self.lldpsum[key]['r_portname'] = rmt_desc.text
-                else:
-                    self.lldpsum[key]['r_portname'] = ''
+                self.lldpsum[key]['r_name'] = rmt_name
+                self.lldpsum[key]['r_portname'] = remote_port['descr']
                 self.lldpsum[key]['capability'] = capab
 
     def sort_sum(self, summary):
