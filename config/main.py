@@ -4103,12 +4103,12 @@ def description(ctx, interface_name, interface_desc, verbose):
         ctx.fail("Interface name is invalid. Please enter a valid interface name!!")
 
     if ctx.obj['namespace'] is DEFAULT_NAMESPACE:
-        command = "portconfig -p {} -d '{}'".format(interface_name, interface_desc)
+        command = ['portconfig', '-p', str(interface_name), '-d', str(interface_desc)]
     else:
-        command = "portconfig -p {} -d '{}' -n {}".format(interface_name, interface_desc, ctx.obj['namespace'])
+        command = ['portconfig', '-p', str(interface_name), '-d', str(interface_desc), '-n', str(ctx.obj['namespace'])]
 
     if verbose:
-        command += " -vv"
+        command += ["-vv"]
     clicommon.run_command(command, display_cmd=verbose)
 
 #
