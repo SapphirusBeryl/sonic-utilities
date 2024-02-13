@@ -142,7 +142,7 @@ class Lldpshow(object):
                     chassis = chassis[rmt_name]
                 else:
                     rmt_name = ''
-                capabs = chassis['capability']
+                capabs = chassis.get('capability', [])
                 if isinstance(capabs, dict):
                     capabs = [capabs]
                 capab = self.parse_cap(capabs)
