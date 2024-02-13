@@ -147,7 +147,7 @@ class Lldpshow(object):
                     capabs = [capabs]
                 capab = self.parse_cap(capabs)
                 self.lldpsum[key]['r_name'] = rmt_name
-                self.lldpsum[key]['r_portname'] = remote_port['descr']
+                self.lldpsum[key]['r_portname'] = remote_port.get('descr') or ''
                 self.lldpsum[key]['capability'] = capab
 
     def sort_sum(self, summary):
